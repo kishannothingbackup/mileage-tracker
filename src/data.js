@@ -73,6 +73,23 @@ export const VEHICLE_CATALOG = [
 
 export const QUICK_AMOUNTS = [100, 200, 500]
 
+// ---------------------------------------------------------------------------
+// Local places — real places the online providers miss, searched first.
+// RJ Dreams Hostel is Kishan's hostel; it is on Google Maps but NOT in
+// OpenStreetMap (checked Photon + Nominatim, 13 Nov 2026), so no OSM-based
+// provider can find it. Coordinates from its public listing
+// (10.050232, 76.331754, Kalamassery). Add more here the same way.
+// ---------------------------------------------------------------------------
+
+export const LOCAL_PLACES = [
+  {
+    name: 'RJ Dreams Hostel',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.050232,
+    lon: 76.331754,
+  },
+]
+
 export function uid() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }

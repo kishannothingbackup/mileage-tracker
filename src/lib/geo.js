@@ -1,15 +1,22 @@
 // ---------------------------------------------------------------------------
 // Precise places & road distances — free, no-key, client-side services.
-//   Search:    Photon (Komoot, OpenStreetMap data) — built for autocomplete.
+//   Search:    Photon (Komoot, OpenStreetMap data) + Nominatim (OpenStreetMap)
+//              search, merged — two different search engines over the same
+//              map data, so named places one misses the other often finds.
+//              A built-in local list (LOCAL_PLACES in data.js) is searched
+//              first for places missing from OpenStreetMap entirely.
 //   Reverse:   Nominatim (OpenStreetMap) — name for a lat/lon.
 //   Routing:   OSRM public demo server — road distance between two points.
-// All three are free for light use with fair-use limits; every call is
+// All are free for light use with fair-use limits; every call is
 // debounced/cached here, and the app falls back to the built-in Kochi
 // route matrix, then straight-line distance, then manual entry, so it
 // keeps working offline or when a service is unreachable.
 // ---------------------------------------------------------------------------
 
+import { LOCAL_PLACES } from '../data.js'
+
 const PHOTON_URL = 'https://photon.komoot.io/api/'
+const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search'
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/reverse'
 const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving'
 
@@ -33,29 +40,33 @@ async function fetchJson(url, { signal, timeoutMs = 8000, headers = {} } = {}) {
   }
 }
 
-/**
- * Search places by name. Returns [{ name, detail, lat, lon }], best first.
- * `name` is the place name; `detail` is e.g. "Kochi, Kerala, India".
- * `bias` ({ lat, lon }) ranks nearby results first — Kochi by default, or
- * the user's location when permission was already granted. Results are
- * ordered Kochi/Kerala first, then India, then elsewhere.
- */
-export async function searchPlaces(query, { signal, headers, bias } = {}) {
-  const q = String(query || '').trim()
+/** Built-in local places (data.js) — substring match on the name. */
+function searchLocalPlaces(query) {
+  const q = String(query || '').trim().toLowerCase()
   if (q.length < 2) return []
-  const b = bias || DEFAULT_BIAS
+  return LOCAL_PLACES.filter((p) => p.name.toLowerCase().includes(q)).map((p) => ({
+    name: p.name,
+    detail: p.detail || '',
+    lat: p.lat,
+    lon: p.lon,
+    _state: 'Kerala',
+    _country: 'India',
+  }))
+}
+
+async function searchPhoton(query, { signal, headers, bias }) {
   const url =
-    `${PHOTON_URL}?q=${encodeURIComponent(q)}&limit=5&lang=en` +
-    `&lat=${b.lat}&lon=${b.lon}`
+    `${PHOTON_URL}?q=${encodeURIComponent(query)}&limit=5&lang=en` +
+    `&lat=${bias.lat}&lon=${bias.lon}`
   const data = await fetchJson(url, { signal, timeoutMs: 8000, headers })
-  const results = (data.features || []).map((f) => {
+  return (data.features || []).map((f) => {
     const p = f.properties || {}
     const [lon, lat] = f.geometry?.coordinates || [null, null]
     const detail = [p.city || p.county, p.state, p.country]
       .filter(Boolean)
       .join(', ')
     return {
-      name: p.name || q,
+      name: p.name || query,
       detail: detail || p.osm_value || '',
       lat,
       lon,
@@ -63,8 +74,74 @@ export async function searchPlaces(query, { signal, headers, bias } = {}) {
       _country: p.country || '',
     }
   }).filter((r) => r.lat != null && r.lon != null)
+}
+
+async function searchNominatim(query, { signal, headers, bias }) {
+  // Soft area bias around the same point Photon uses (a ~3° box, about
+  // Kerala-sized) — results outside it still appear, just ranked lower
+  // by the tier sort below. Nominatim's policy is ~1 request/sec; the
+  // app debounces typing and aborts in-flight searches, so a single
+  // user's typing stays far below that.
+  const viewbox =
+    `${bias.lon - 1.5},${bias.lat + 1.5},${bias.lon + 1.5},${bias.lat - 1.5}`
+  const url =
+    `${NOMINATIM_SEARCH_URL}?format=jsonv2&q=${encodeURIComponent(query)}` +
+    `&addressdetails=1&namedetails=1&limit=5&viewbox=${viewbox}`
+  const data = await fetchJson(url, { signal, timeoutMs: 8000, headers })
+  return (Array.isArray(data) ? data : []).map((item) => {
+    const a = item.address || {}
+    const detail = [
+      a.suburb || a.neighbourhood || a.city_district,
+      a.city || a.town || a.village || a.municipality,
+      a.state,
+      a.country,
+    ]
+      .filter(Boolean)
+      .join(', ')
+    return {
+      name: item.namedetails?.name || String(item.display_name || '').split(',')[0] || query,
+      detail,
+      lat: parseFloat(item.lat),
+      lon: parseFloat(item.lon),
+      _state: a.state || '',
+      _country: a.country || '',
+    }
+  }).filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon))
+}
+
+/**
+ * Search places by name. Returns [{ name, detail, lat, lon }], best first.
+ * `name` is the place name; `detail` is e.g. "Kochi, Kerala, India".
+ * `bias` ({ lat, lon }) ranks nearby results first — Kochi by default, or
+ * the user's location when permission was already granted. Results are
+ * ordered Kochi/Kerala first, then India, then elsewhere. Sources, in
+ * order: built-in local places, Photon, Nominatim (deduped).
+ */
+export async function searchPlaces(query, { signal, headers, bias } = {}) {
+  const q = String(query || '').trim()
+  if (q.length < 2) return []
+  const b = bias || DEFAULT_BIAS
+  const local = searchLocalPlaces(q)
+  const [photon, nominatim] = await Promise.allSettled([
+    searchPhoton(q, { signal, headers, bias: b }),
+    searchNominatim(q, { signal, headers, bias: b }),
+  ])
+  const merged = [
+    ...local,
+    ...(photon.status === 'fulfilled' ? photon.value : []),
+    ...(nominatim.status === 'fulfilled' ? nominatim.value : []),
+  ]
+  // Dedupe the same place from both engines (same name, ~100 m apart).
+  const seen = new Set()
+  const results = merged.filter((r) => {
+    const key = `${r.name.toLowerCase()}|${r.lat.toFixed(3)}|${r.lon.toFixed(3)}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
   // Preference order: Kerala first, then India, then elsewhere. Stable, so
-  // Photon's own ranking (proximity to the bias point) holds within a tier.
+  // each engine's own ranking (proximity to the bias point) holds within
+  // a tier, and local places stay first.
   const tier = (r) => (r._state === 'Kerala' ? 0 : r._country === 'India' ? 1 : 2)
   return results
     .sort((a, b) => tier(a) - tier(b))
