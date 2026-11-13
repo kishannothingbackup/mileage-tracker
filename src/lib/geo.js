@@ -13,10 +13,10 @@ const PHOTON_URL = 'https://photon.komoot.io/api/'
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/reverse'
 const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving'
 
-// Kerala bias for search ranking (the app's home turf — results elsewhere
-// still work, Kerala ones just rank first).
-const BIAS_LAT = 10.85
-const BIAS_LON = 76.27
+// Kochi bias for search ranking by default (the app's home turf — results
+// elsewhere still work, Kochi/Kerala ones just rank first). When the user
+// has already allowed location access, the live position replaces this.
+const DEFAULT_BIAS = { lat: 9.9312, lon: 76.2673 } // Kochi
 
 async function fetchJson(url, { signal, timeoutMs = 8000, headers = {} } = {}) {
   const ctrl = new AbortController()
@@ -36,15 +36,19 @@ async function fetchJson(url, { signal, timeoutMs = 8000, headers = {} } = {}) {
 /**
  * Search places by name. Returns [{ name, detail, lat, lon }], best first.
  * `name` is the place name; `detail` is e.g. "Kochi, Kerala, India".
+ * `bias` ({ lat, lon }) ranks nearby results first — Kochi by default, or
+ * the user's location when permission was already granted. Results are
+ * ordered Kochi/Kerala first, then India, then elsewhere.
  */
-export async function searchPlaces(query, { signal, headers } = {}) {
+export async function searchPlaces(query, { signal, headers, bias } = {}) {
   const q = String(query || '').trim()
   if (q.length < 2) return []
+  const b = bias || DEFAULT_BIAS
   const url =
     `${PHOTON_URL}?q=${encodeURIComponent(q)}&limit=5&lang=en` +
-    `&lat=${BIAS_LAT}&lon=${BIAS_LON}`
+    `&lat=${b.lat}&lon=${b.lon}`
   const data = await fetchJson(url, { signal, timeoutMs: 8000, headers })
-  return (data.features || []).map((f) => {
+  const results = (data.features || []).map((f) => {
     const p = f.properties || {}
     const [lon, lat] = f.geometry?.coordinates || [null, null]
     const detail = [p.city || p.county, p.state, p.country]
@@ -55,8 +59,31 @@ export async function searchPlaces(query, { signal, headers } = {}) {
       detail: detail || p.osm_value || '',
       lat,
       lon,
+      _state: p.state || '',
+      _country: p.country || '',
     }
   }).filter((r) => r.lat != null && r.lon != null)
+  // Preference order: Kerala first, then India, then elsewhere. Stable, so
+  // Photon's own ranking (proximity to the bias point) holds within a tier.
+  const tier = (r) => (r._state === 'Kerala' ? 0 : r._country === 'India' ? 1 : 2)
+  return results
+    .sort((a, b) => tier(a) - tier(b))
+    .map(({ _state, _country, ...rest }) => rest)
+}
+
+/**
+ * Geolocation permission state without prompting the user:
+ * 'granted' | 'prompt' | 'denied' | 'unsupported'. Only when 'granted'
+ * may the app read the position silently (no permission popup).
+ */
+export async function queryGeolocationPermission() {
+  try {
+    if (!('permissions' in navigator) || !navigator.permissions?.query) return 'unsupported'
+    const status = await navigator.permissions.query({ name: 'geolocation' })
+    return status.state
+  } catch {
+    return 'unsupported'
+  }
 }
 
 /**

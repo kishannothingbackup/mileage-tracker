@@ -5,6 +5,7 @@ import {
   reverseGeocode,
   getRoadDistance,
   haversineKm,
+  queryGeolocationPermission,
 } from '../lib/geo.js'
 
 /**
@@ -22,7 +23,7 @@ import {
 const roadCache = new Map() // "lat,lon|lat,lon" -> km
 
 /** One endpoint: { query (typed text), place ({ name, detail, lat, lon } | null) } */
-function PlaceInput({ label, endpoint, onEndpointChange, onFocus }) {
+function PlaceInput({ label, endpoint, onEndpointChange, onFocus, bias }) {
   const [suggestions, setSuggestions] = useState([])
   const [searching, setSearching] = useState(false)
   const [open, setOpen] = useState(false)
@@ -30,12 +31,15 @@ function PlaceInput({ label, endpoint, onEndpointChange, onFocus }) {
   const [searchError, setSearchError] = useState('')
   const abortRef = useRef(null)
   const blurTimer = useRef(null)
+  // Search only after the user has typed in this field — never on load.
+  const touchedRef = useRef(false)
 
   const query = endpoint.query
   const pickedName = endpoint.place?.name || ''
 
   // Debounced search while the user types (not when a suggestion was picked).
   useEffect(() => {
+    if (!touchedRef.current) return
     if (query.trim().length < 2 || query === pickedName) {
       setSuggestions([])
       setSearching(false)
@@ -47,7 +51,7 @@ function PlaceInput({ label, endpoint, onEndpointChange, onFocus }) {
       const ctrl = new AbortController()
       abortRef.current = ctrl
       try {
-        const results = await searchPlaces(query, { signal: ctrl.signal })
+        const results = await searchPlaces(query, { signal: ctrl.signal, bias })
         if (ctrl.signal.aborted) return
         setSuggestions(results)
         setSearchError('')
@@ -63,7 +67,7 @@ function PlaceInput({ label, endpoint, onEndpointChange, onFocus }) {
       }
     }, 400)
     return () => clearTimeout(t)
-  }, [query, pickedName])
+  }, [query, pickedName, bias])
 
   function pick(s) {
     onEndpointChange({ query: s.name, place: s })
@@ -97,6 +101,7 @@ function PlaceInput({ label, endpoint, onEndpointChange, onFocus }) {
           autoComplete="off"
           placeholder="Type a place…"
           onChange={(e) => {
+            touchedRef.current = true
             onEndpointChange({ query: e.target.value, place: null })
             setOpen(true)
           }}
@@ -154,8 +159,9 @@ export default function TripCalculator({
   onSelectVehicle,
   measuredAvg,
 }) {
-  const [from, setFrom] = useState({ query: 'Kalamassery', place: null })
-  const [to, setTo] = useState({ query: 'Edappally', place: null })
+  // Both fields start empty — nothing is searched or shown until the user types.
+  const [from, setFrom] = useState({ query: '', place: null })
+  const [to, setTo] = useState({ query: '', place: null })
   const [manualKm, setManualKm] = useState('')
   const [mileageMode, setMileageMode] = useState('claimed') // claimed | measured | custom
   const [customMileage, setCustomMileage] = useState('')
@@ -167,6 +173,30 @@ export default function TripCalculator({
     loading: false,
   })
   const [locState, setLocState] = useState('') // '', 'locating', 'done', 'denied', 'unavailable'
+  // Search bias: the user's location when permission was already granted,
+  // otherwise Kochi (the default in geo.js). Checked once on load — this
+  // never triggers a permission popup; it only reads the position when
+  // permission is already 'granted'.
+  const [userLoc, setUserLoc] = useState(null)
+  useEffect(() => {
+    let cancelled = false
+    async function initBias() {
+      if (!('geolocation' in navigator)) return
+      const permission = await queryGeolocationPermission()
+      if (cancelled || permission !== 'granted') return
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (!cancelled) setUserLoc({ lat: pos.coords.latitude, lon: pos.coords.longitude })
+        },
+        () => {},
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+      )
+    }
+    initBias()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const vehicle = vehicles.find((v) => v.id === selectedVehicleId) || vehicles[0]
 
@@ -256,6 +286,7 @@ export default function TripCalculator({
         }
         const label = name || 'My location'
         setFrom({ query: label, place: { name: label, detail: '', lat: latitude, lon: longitude } })
+        setUserLoc({ lat: latitude, lon: longitude })
         setLocState('done')
       },
       (err) => {
@@ -297,11 +328,11 @@ export default function TripCalculator({
       <div className="step-label">Step 2 · What will this trip cost?</div>
 
       <div className="field-row">
-        <PlaceInput label="From" endpoint={from} onEndpointChange={(e) => { setFrom(e); setResult(null) }} />
+        <PlaceInput label="From" endpoint={from} onEndpointChange={(e) => { setFrom(e); setResult(null) }} bias={userLoc} />
         <button type="button" className="btn btn-icon swap-btn" onClick={swap} aria-label="Swap from and to">
           ⇄
         </button>
-        <PlaceInput label="To" endpoint={to} onEndpointChange={(e) => { setTo(e); setResult(null) }} />
+        <PlaceInput label="To" endpoint={to} onEndpointChange={(e) => { setTo(e); setResult(null) }} bias={userLoc} />
       </div>
 
       <div className="loc-row">
