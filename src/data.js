@@ -83,6 +83,12 @@ export const QUICK_AMOUNTS = [100, 200, 500]
 // coordinates from its public listing (10.04538, 76.329835). Places not in
 // OSM are added here by looking them up on the Google Maps website (no
 // API) and pinning their coordinates. Add more here the same way.
+// Google Maps sweep 13 Nov 2026: 33 more hostels/restaurants around CUSAT
+// (within ~2 km, read off each place's own Maps URL) — incl. Olive Homes
+// (the "Olive"), PM Hostel (the "PWM", also shown as PMH), Muttipadi Ghee
+// Centre (a restaurant, not a hostel) and Amaan Mens Hostel (the "Amans",
+// 4.1 km away in North Kalamassery). "Delight" was NOT found on Maps near
+// CUSAT at all. Albaik Kalamassery (2.08 km) is just past the 2 km line.
 // ---------------------------------------------------------------------------
 
 export const LOCAL_PLACES = [
@@ -93,7 +99,7 @@ export const LOCAL_PLACES = [
     lon: 76.331754,
   },
   {
-    name: "Sreepadam Men's Hostel",
+    name: 'Sreepadam Men\'s Hostel',
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.04538,
     lon: 76.329835,
@@ -140,6 +146,12 @@ export const LOCAL_PLACES = [
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.043155,
     lon: 76.327992,
+  },
+  {
+    name: 'Zacchaeus Mens Hostel',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0441116,
+    lon: 76.3296973,
   },
   {
     name: 'Department of Physics & Applied Chemistry',
@@ -262,6 +274,13 @@ export const LOCAL_PLACES = [
     lon: 76.328699,
   },
   {
+    name: 'PM Hostel',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0451375,
+    lon: 76.3306094,
+    aliases: ['PMH Hostel', 'PWM'],
+  },
+  {
     name: 'Njalakam Juma Masjid',
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.044139,
@@ -280,10 +299,22 @@ export const LOCAL_PLACES = [
     lon: 76.326129,
   },
   {
+    name: 'Illikkal Hostel for Girls',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0429673,
+    lon: 76.3262862,
+  },
+  {
     name: 'Cafe point',
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.042181,
     lon: 76.327094,
+  },
+  {
+    name: 'Dream Valley Housing',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0451811,
+    lon: 76.3308583,
   },
   {
     name: 'Momentum park',
@@ -509,16 +540,22 @@ export const LOCAL_PLACES = [
     lon: 76.331305,
   },
   {
+    name: 'fluid mechanics laboratory',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.047516,
+    lon: 76.331478,
+  },
+  {
     name: 'International Students Hostel, CUSAT',
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.039892,
     lon: 76.328079,
   },
   {
-    name: 'fluid mechanics laboratory',
+    name: 'SRA Ladies Hostel',
     detail: 'CUSAT Campus, Kalamassery',
-    lat: 10.047516,
-    lon: 76.331478,
+    lat: 10.0466969,
+    lon: 76.3245672,
   },
   {
     name: 'Aishwarya Hostel',
@@ -545,6 +582,12 @@ export const LOCAL_PLACES = [
     lon: 76.323797,
   },
   {
+    name: 'Anu Ladies Hostel',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0467448,
+    lon: 76.3244192,
+  },
+  {
     name: 'SRP Tea Shop',
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.047512,
@@ -561,6 +604,12 @@ export const LOCAL_PLACES = [
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.045935,
     lon: 76.323629,
+  },
+  {
+    name: 'Ajmi Mens Hostel',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0466303,
+    lon: 76.3239337,
   },
   {
     name: 'SOE Office',
@@ -582,6 +631,12 @@ export const LOCAL_PLACES = [
     lon: 76.327803,
   },
   {
+    name: 'Malik Food Partner',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.039066,
+    lon: 76.327933,
+  },
+  {
     name: 'A Block',
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.048585,
@@ -594,10 +649,22 @@ export const LOCAL_PLACES = [
     lon: 76.323148,
   },
   {
+    name: 'Ashiana Boy\'s Hostel',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0412697,
+    lon: 76.3332613,
+  },
+  {
     name: 'Software Block',
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.049334,
     lon: 76.331266,
+  },
+  {
+    name: 'Flamezone Restaurant',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0460601,
+    lon: 76.3226882,
   },
   {
     name: 'New Laboratory Block',
@@ -648,6 +715,12 @@ export const LOCAL_PLACES = [
     lon: 76.332897,
   },
   {
+    name: 'She Stay Ladies Hostel',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0508117,
+    lon: 76.3309047,
+  },
+  {
     name: 'DESSI CUPPA',
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.046693,
@@ -696,6 +769,13 @@ export const LOCAL_PLACES = [
     lon: 76.333898,
   },
   {
+    name: 'Olive Homes',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0512131,
+    lon: 76.330906,
+    aliases: ['Olive Hostel'],
+  },
+  {
     name: 'Taboon Mandi',
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.049367,
@@ -708,6 +788,19 @@ export const LOCAL_PLACES = [
     lon: 76.33049,
   },
   {
+    name: 'Ave Maria Hostel',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.0482746,
+    lon: 76.3219705,
+    aliases: ['Ave Maria Hostel, Annunciation Convent'],
+  },
+  {
+    name: 'Burger Spot',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.046525,
+    lon: 76.32112,
+  },
+  {
     name: 'Fino Payments Bank',
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.048702,
@@ -718,6 +811,12 @@ export const LOCAL_PLACES = [
     detail: 'CUSAT Campus, Kalamassery',
     lat: 10.050836,
     lon: 76.332216,
+  },
+  {
+    name: 'Lazim Ladies Hostel',
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.051506,
+    lon: 76.3308916,
   },
   {
     name: 'സൽക്കാരം',
@@ -768,6 +867,19 @@ export const LOCAL_PLACES = [
     lon: 76.326361,
   },
   {
+    name: 'Lael Ladies Hostel',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0462713,
+    lon: 76.3199235,
+  },
+  {
+    name: 'Butterfly Ladies Hostel',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.052527,
+    lon: 76.3310521,
+    aliases: ['Butterfly Ladies Hostel Near CUSAT'],
+  },
+  {
     name: 'CUSAT Main Office Bus Stop',
     detail: 'Kalamassery, Kerala, India',
     lat: 10.049637,
@@ -784,6 +896,12 @@ export const LOCAL_PLACES = [
     detail: 'Kalamassery, Kerala, India',
     lat: 10.051835,
     lon: 76.332842,
+  },
+  {
+    name: 'PMA Ladies Hostel',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0463384,
+    lon: 76.3197823,
   },
   {
     name: 'Metro Mind - Psychiatric Hospital',
@@ -828,6 +946,13 @@ export const LOCAL_PLACES = [
     lon: 76.319636,
   },
   {
+    name: 'Rose and Mango',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.042896,
+    lon: 76.3379418,
+    aliases: ['Rose and Mango, Kaipadamughal'],
+  },
+  {
     name: 'Toshiba Bus stop',
     detail: 'Kalamassery, Kerala, India',
     lat: 10.0517,
@@ -844,6 +969,12 @@ export const LOCAL_PLACES = [
     detail: 'Kalamassery, Kerala, India',
     lat: 10.053825,
     lon: 76.327482,
+  },
+  {
+    name: 'Kismath Restaurant',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.047156,
+    lon: 76.3190897,
   },
   {
     name: 'Cochin biriyani house',
@@ -886,6 +1017,12 @@ export const LOCAL_PLACES = [
     detail: 'Kalamassery, Kerala, India',
     lat: 10.041419,
     lon: 76.338388,
+  },
+  {
+    name: 'Trendz Ladies Hostel',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0540182,
+    lon: 76.3249534,
   },
   {
     name: 'Mount Tabor Residential Central School',
@@ -978,6 +1115,13 @@ export const LOCAL_PLACES = [
     lon: 76.339068,
   },
   {
+    name: 'Barakaas Resto',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0447012,
+    lon: 76.3174336,
+    aliases: ['Barakaas Resto Kalamassery'],
+  },
+  {
     name: 'Government ITI Kalamassery',
     detail: 'Kalamassery, Kerala, India',
     lat: 10.055096,
@@ -1026,6 +1170,13 @@ export const LOCAL_PLACES = [
     lon: 76.328921,
   },
   {
+    name: 'Muttipadi Ghee Centre',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0478982,
+    lon: 76.3175527,
+    aliases: ['Muttipadi Neychor Centre'],
+  },
+  {
     name: 'Dr. Promodus Institute Of Sexual and Marital Health',
     detail: 'Kalamassery, Kerala, India',
     lat: 10.034035,
@@ -1056,6 +1207,19 @@ export const LOCAL_PLACES = [
     lon: 76.324923,
   },
   {
+    name: 'Biriyani Chembu',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0429188,
+    lon: 76.3168317,
+  },
+  {
+    name: 'Emarath Restaurant',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0517893,
+    lon: 76.3194902,
+    aliases: ['Imarath Restaurant'],
+  },
+  {
     name: 'Midtown Medical Centre',
     detail: 'Kalamassery, Kerala, India',
     lat: 10.035619,
@@ -1068,16 +1232,16 @@ export const LOCAL_PLACES = [
     lon: 76.317208,
   },
   {
-    name: 'Cardinal Higher Secondary School, Thrikkakara',
-    detail: 'Kalamassery, Kerala, India',
-    lat: 10.034119,
-    lon: 76.334226,
-  },
-  {
     name: 'Government ITI for Women',
     detail: 'Kalamassery, Kerala, India',
     lat: 10.055969,
     lon: 76.32776,
+  },
+  {
+    name: 'Cardinal Higher Secondary School, Thrikkakara',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.034119,
+    lon: 76.334226,
   },
   {
     name: 'London College',
@@ -1114,6 +1278,13 @@ export const LOCAL_PLACES = [
     detail: 'Kalamassery, Kerala, India',
     lat: 10.05246,
     lon: 76.319569,
+  },
+  {
+    name: 'Al Taza - Kalamassery',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0527822,
+    lon: 76.3197505,
+    aliases: ['Al Thasa'],
   },
   {
     name: 'Main Auditorium',
@@ -1200,10 +1371,28 @@ export const LOCAL_PLACES = [
     lon: 76.325133,
   },
   {
+    name: 'Arakkal Ladies Hostel',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.047226,
+    lon: 76.315782,
+  },
+  {
+    name: 'Elon Gents Hostel',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0550792,
+    lon: 76.335565,
+  },
+  {
     name: 'CSB Bank',
     detail: 'Kalamassery, Kerala, India',
     lat: 10.036483,
     lon: 76.338895,
+  },
+  {
+    name: 'The Little Haven Ladies Hostel',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.044864,
+    lon: 76.315208,
   },
   {
     name: 'Civil Engineering Department',
@@ -1242,16 +1431,16 @@ export const LOCAL_PLACES = [
     lon: 76.329357,
   },
   {
-    name: 'Jesus Youth',
-    detail: 'Kalamassery, Kerala, India',
-    lat: 10.057222,
-    lon: 76.324999,
-  },
-  {
     name: 'Sheet Metal Workshop',
     detail: 'Kalamassery, Kerala, India',
     lat: 10.057359,
     lon: 76.325591,
+  },
+  {
+    name: 'Jesus Youth',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.057222,
+    lon: 76.324999,
   },
   {
     name: 'Womens Polytechnic College Kalamasssery',
@@ -1312,6 +1501,13 @@ export const LOCAL_PLACES = [
     detail: 'Kalamassery, Kerala, India',
     lat: 10.056752,
     lon: 76.321666,
+  },
+  {
+    name: 'Mesban Restaurant',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0570194,
+    lon: 76.321657,
+    aliases: ['Mezban Restaurant'],
   },
   {
     name: 'Rajagiri Public School',
@@ -1480,6 +1676,25 @@ export const LOCAL_PLACES = [
     detail: 'Kalamassery, Kerala, India',
     lat: 10.033445,
     lon: 76.31402,
+  },
+  {
+    name: 'KVS Mens Hostel',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0605807,
+    lon: 76.3208188,
+  },
+  {
+    name: 'Albaik Kalamassery',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0622765,
+    lon: 76.3230354,
+  },
+  {
+    name: 'Amaan Mens Hostel',
+    detail: 'Kalamassery, Kerala, India',
+    lat: 10.0605877,
+    lon: 76.3622814,
+    aliases: ['Amans'],
   },
 ]
 
