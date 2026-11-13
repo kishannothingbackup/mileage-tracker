@@ -437,6 +437,12 @@ input:focus {
   line-height: 1;
 }
 
+/* The From/To fields carry a 12px bottom margin; without the same margin
+ * the swap button hangs 12px below the inputs under flex-end alignment. */
+.swap-btn {
+  margin-bottom: 12px;
+}
+
 .btn-mini {
   padding: 6px 10px;
   border-radius: 9px;

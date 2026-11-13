@@ -296,16 +296,15 @@ export default function TripCalculator({
     )
   }
 
-  function calculate() {
+  function computeResult() {
     if (!vehicle || !distance || distance <= 0 || !effectiveMileage || effectiveMileage <= 0) {
-      setResult({ error: 'Pick a route, a vehicle and a mileage to calculate.' })
-      return
+      return { error: 'Pick a route, a vehicle and a mileage to calculate.' }
     }
     const oneWayKm = distance
     const totalKm = roundTrip ? distance * 2 : distance
     const litres = totalKm / effectiveMileage
     const cost = litres * fuelPrice
-    setResult({
+    return {
       oneWayKm,
       totalKm,
       litres,
@@ -320,8 +319,20 @@ export default function TripCalculator({
             : 'claimed mileage',
       fuelPrice,
       fuelLabel: vehicle.fuel === 'diesel' ? 'Diesel' : 'Petrol',
-    })
+    }
   }
+
+  function calculate() {
+    setResult(computeResult())
+  }
+
+  // Once a result exists, keep it live: toggling round trip, swapping
+  // places, or changing vehicle/mileage updates the numbers immediately
+  // instead of leaving a stale result under a new label.
+  useEffect(() => {
+    if (result !== null) setResult(computeResult())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [distance, vehicle, effectiveMileage, mileageMode, roundTrip, fuelPrice])
 
   return (
     <section className="card" aria-label="Trip cost calculator">
@@ -460,7 +471,7 @@ export default function TripCalculator({
         <div className="lcd-panel result-panel" aria-live="polite">
           <div className="result-cost">
             <span className="lcd-label">
-              {roundTrip ? 'Round trip' : 'One way'} · {result.totalKm} km
+              {roundTrip ? 'Round trip' : 'One way'} · {result.totalKm.toFixed(1)} km
             </span>
             <span className="result-value">{formatINR(result.cost)}</span>
             <span className="lcd-unit">
