@@ -78,7 +78,11 @@ export const QUICK_AMOUNTS = [100, 200, 500]
 // RJ Dreams Hostel is Kishan's hostel; it is on Google Maps but NOT in
 // OpenStreetMap (checked Photon + Nominatim, 13 Nov 2026), so no OSM-based
 // provider can find it. Coordinates from its public listing
-// (10.050232, 76.331754, Kalamassery). Add more here the same way.
+// (10.050232, 76.331754, Kalamassery). Sreepadam Men's Hostel (Kishan's
+// campus hostel) is the same story — found on Google Maps, not in OSM,
+// coordinates from its public listing (10.04538, 76.329835). Places not in
+// OSM are added here by looking them up on the Google Maps website (no
+// API) and pinning their coordinates. Add more here the same way.
 // ---------------------------------------------------------------------------
 
 export const LOCAL_PLACES = [
@@ -87,6 +91,13 @@ export const LOCAL_PLACES = [
     detail: 'Kalamassery, Kerala, India',
     lat: 10.050232,
     lon: 76.331754,
+  },
+  {
+    name: "Sreepadam Men's Hostel",
+    detail: 'CUSAT Campus, Kalamassery',
+    lat: 10.04538,
+    lon: 76.329835,
+    aliases: ['Sreepadam Hostel', 'Sreepadam Mens Hostel'],
   },
   {
     name: 'Cochin University of Science and Technology',
