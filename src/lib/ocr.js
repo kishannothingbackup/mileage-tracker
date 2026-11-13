@@ -90,16 +90,17 @@ function findLcdBox(canvas) {
 }
 
 /**
- * Binarize an LCD crop: threshold from the crop's own luminance histogram
- * (midpoint between the dark-digit cluster and the bright-background
- * cluster), then upscale 3x with hard edges.
+ * Binarize a region of a canvas: threshold from the region's own luminance
+ * histogram (midpoint between the dark-digit cluster and the bright
+ * background cluster), then upscale with hard edges.
+ * `box` is in source-canvas coords; `margin` pads it; `upscale` scales it.
+ * Returns { canvas, originX, originY, upscale } for coordinate mapping.
  */
-function binarizeLcd(sourceCanvas, box) {
-  const m = 4 // margin around the detected display
-  const x0 = Math.max(0, box.x0 - m)
-  const y0 = Math.max(0, box.y0 - m)
-  const x1 = Math.min(sourceCanvas.width - 1, box.x1 + m)
-  const y1 = Math.min(sourceCanvas.height - 1, box.y1 + m)
+function binarizeRegion(sourceCanvas, box, margin, upscale) {
+  const x0 = Math.max(0, box.x0 - margin)
+  const y0 = Math.max(0, box.y0 - margin)
+  const x1 = Math.min(sourceCanvas.width - 1, box.x1 + margin)
+  const y1 = Math.min(sourceCanvas.height - 1, box.y1 + margin)
   const w = x1 - x0 + 1
   const h = y1 - y0 + 1
   const crop = makeCanvas(w, h)
@@ -121,11 +122,16 @@ function binarizeLcd(sourceCanvas, box) {
     out.data[i + 3] = 255
   }
   ctx.putImageData(out, 0, 0)
-  const big = makeCanvas(w * 3, h * 3)
+  const big = makeCanvas(w * upscale, h * upscale)
   const bctx = big.getContext('2d')
   bctx.imageSmoothingEnabled = false
   bctx.drawImage(crop, 0, 0, big.width, big.height)
-  return { canvas: big, originX: x0, originY: y0, upscale: 3 }
+  return { canvas: big, originX: x0, originY: y0, upscale }
+}
+
+/** Binarize an LCD crop (thin margin, 3x upscale). */
+function binarizeLcd(sourceCanvas, box) {
+  return binarizeRegion(sourceCanvas, box, 4, 3)
 }
 
 /**
@@ -156,9 +162,29 @@ async function buildVariants(photoDataUrl) {
   const lcdBox = findLcdBox(base)
   const lcd = lcdBox ? binarizeLcd(base, lcdBox) : null
 
+  // Drum window: on analogue clusters the mechanical odometer sits in a
+  // small window at the centre of the dial (above the trip meter). Crop
+  // that window, binarize and upscale it — the dial numbers at the rim
+  // never enter this pass.
+  const drumBox = {
+    x0: Math.round(base.width * 0.3),
+    y0: Math.round(base.height * 0.32),
+    x1: Math.round(base.width * 0.7),
+    y1: Math.round(base.height * 0.68),
+  }
+  const drum = binarizeRegion(base, drumBox, 0, 3)
+
   const variants = [
     { name: 'enhanced', canvas: enhanced, toBase: (b) => ({ x0: b.x0 / 1.5, y0: b.y0 / 1.5, x1: b.x1 / 1.5, y1: b.y1 / 1.5 }) },
     { name: 'centre', canvas: centre, toBase: (b) => ({ x0: (b.x0 + cx0) / 1.5, y0: (b.y0 + cy0) / 1.5, x1: (b.x1 + cx0) / 1.5, y1: (b.y1 + cy0) / 1.5 }) },
+    {
+      name: 'drum',
+      canvas: drum.canvas,
+      toBase: (b) => ({
+        x0: b.x0 / drum.upscale + drum.originX, y0: b.y0 / drum.upscale + drum.originY,
+        x1: b.x1 / drum.upscale + drum.originX, y1: b.y1 / drum.upscale + drum.originY,
+      }),
+    },
   ]
   if (lcd) {
     variants.unshift({
@@ -228,10 +254,14 @@ export function scoreCandidates(words, imgW, imgH, lastOdometer = null) {
     if (len >= 4 && len <= 6) score += 25
     else if (len === 3) score += 10
     else if (len >= 7) score -= 50
-    // Position: the digital display sits low-centre; dial numbers rim it.
+    // Position: the reading sits either in a digital display (low-centre)
+    // or in a mechanical drum window (centre of the dial); dial numbers
+    // rim the edge. Score by the nearer of the two sweet spots.
     const cx = (c.x0 + c.x1) / 2 / imgW
     const cy = (c.y0 + c.y1) / 2 / imgH
-    const dist = Math.hypot((cx - 0.5) * 1.2, cy - 0.68)
+    const distLcd = Math.hypot((cx - 0.5) * 1.2, cy - 0.68)
+    const distDrum = Math.hypot((cx - 0.5) * 1.2, cy - 0.5)
+    const dist = Math.min(distLcd, distDrum)
     score += 25 * Math.max(0, 1 - dist / 0.6)
     // Size: LCD digits are large relative to the frame.
     score += 10 * Math.min(1, (c.y1 - c.y0) / imgH / 0.05)
@@ -270,6 +300,13 @@ export async function readOdometer(photoDataUrl, { lastOdometer = null, onProgre
     // The LCD crop contains only the display: single line, digits only.
     passes.push({ variant: lcdVariant, psm: '7', whitelist: '0123456789' })
     passes.push({ variant: lcdVariant, psm: '13', whitelist: '0123456789' })
+  }
+  const drumVariant = variants.find((v) => v.name === 'drum')
+  if (drumVariant) {
+    // The drum window contains the odometer drums (and the trip meter
+    // below them): single line first, then block mode.
+    passes.push({ variant: drumVariant, psm: '7', whitelist: '0123456789' })
+    passes.push({ variant: drumVariant, psm: '6', whitelist: '0123456789' })
   }
   const enhanced = variants.find((v) => v.name === 'enhanced')
   const centre = variants.find((v) => v.name === 'centre')
