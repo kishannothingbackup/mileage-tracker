@@ -40,11 +40,16 @@ async function fetchJson(url, { signal, timeoutMs = 8000, headers = {} } = {}) {
   }
 }
 
-/** Built-in local places (data.js) — substring match on the name. */
+/** Built-in local places (data.js) — substring match on the name or any
+ * alias, best 5 (the list is ordered nearest-campus-first, so the closest
+ * matches win). */
 function searchLocalPlaces(query) {
   const q = String(query || '').trim().toLowerCase()
   if (q.length < 2) return []
-  return LOCAL_PLACES.filter((p) => p.name.toLowerCase().includes(q)).map((p) => ({
+  return LOCAL_PLACES.filter((p) =>
+    p.name.toLowerCase().includes(q) ||
+    (p.aliases || []).some((a) => a.toLowerCase().includes(q)),
+  ).slice(0, 5).map((p) => ({
     name: p.name,
     detail: p.detail || '',
     lat: p.lat,
