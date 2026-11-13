@@ -235,7 +235,7 @@ export default function FillForm({
           className="btn btn-ghost btn-block"
           onClick={() => fileRef.current?.click()}
         >
-          {photo ? 'Change odometer photo' : 'Add odometer photo (optional)'}
+          {photo ? 'Change odometer photo' : '📷 Or add odometer photo'}
         </button>
         {photo && (
           <div className="photo-preview">

@@ -59,39 +59,41 @@ export default function PricePanel({ prices, onSavePrices }) {
 
       {editing ? (
         <div className="price-edit">
-          <label>
-            Petrol ₹/L
-            <input
-              type="number"
-              inputMode="decimal"
-              min="0"
-              step="0.01"
-              value={petrol}
-              onChange={(e) => setPetrol(e.target.value)}
-            />
-          </label>
-          <label>
-            Diesel ₹/L
-            <input
-              type="number"
-              inputMode="decimal"
-              min="0"
-              step="0.01"
-              value={diesel}
-              onChange={(e) => setDiesel(e.target.value)}
-            />
-          </label>
-          <div className="row gap">
-            <button type="button" className="btn btn-primary" onClick={save}>
+          <div className="field-row">
+            <label className="field">
+              Petrol ₹/L
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.01"
+                value={petrol}
+                onChange={(e) => setPetrol(e.target.value)}
+              />
+            </label>
+            <label className="field">
+              Diesel ₹/L
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.01"
+                value={diesel}
+                onChange={(e) => setDiesel(e.target.value)}
+              />
+            </label>
+          </div>
+          <div className="row gap price-actions">
+            <button type="button" className="btn btn-primary btn-grow" onClick={save}>
               Save prices
             </button>
-            <button type="button" className="btn btn-ghost" onClick={() => setEditing(false)}>
+            <button type="button" className="btn btn-ghost btn-grow" onClick={() => setEditing(false)}>
               Cancel
             </button>
-            <button type="button" className="btn btn-ghost" onClick={reset}>
-              Reset to 13 Nov 2026
-            </button>
           </div>
+          <button type="button" className="btn btn-ghost btn-block" onClick={reset}>
+            Reset to 13 Nov 2026
+          </button>
         </div>
       ) : (
         <button type="button" className="btn btn-ghost btn-block" onClick={openEdit}>

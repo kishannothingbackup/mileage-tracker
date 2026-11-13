@@ -584,6 +584,17 @@ input:focus {
   align-items: stretch;
 }
 
+/* Save/Cancel share one row at equal width; Reset sits full-width below,
+ * so no button label ever wraps (the old three-in-a-row squeezed them). */
+.price-actions {
+  margin-bottom: 8px;
+}
+
+.price-actions .btn,
+.price-edit .btn-block {
+  white-space: nowrap;
+}
+
 .price-card .btn-block {
   margin-top: 14px;
 }
