@@ -936,6 +936,67 @@ input:focus {
 }
 
 /* ------------------------------------------------------------------ */
+/* Place search (From / To)                                            */
+/* ------------------------------------------------------------------ */
+.place-field {
+  position: relative;
+}
+
+.place-wrap {
+  position: relative;
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.suggestion {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggestion:last-child {
+  border-bottom: none;
+}
+
+.suggestion small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.suggestion:hover,
+.suggestion.active {
+  background: var(--accent-soft);
+}
+
+.loc-row {
+  display: flex;
+  gap: 8px;
+  margin: -4px 0 12px;
+}
+
+/* ------------------------------------------------------------------ */
 /* Motion                                                              */
 /* ------------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
