@@ -6,8 +6,20 @@ import { litresForFill } from '../lib/mileage.js'
  * later fill exists; the first fill has no interval yet. Edit opens the fill
  * form in edit mode; delete asks for confirmation.
  */
-export default function FillLog({ fills, intervals, onEdit, onDelete }) {
+export default function FillLog({ fills, intervals, hasVehicle, onEdit, onDelete }) {
   const intervalByFillId = new Map(intervals.map((x) => [x.fill.id, x]))
+
+  if (!hasVehicle) {
+    return (
+      <section className="card" aria-label="Fill log">
+        <div className="step-label">Fill log</div>
+        <div className="empty-state">
+          <p>No vehicle yet.</p>
+          <p>Add one in Your vehicles below to start logging fills.</p>
+        </div>
+      </section>
+    )
+  }
 
   if (fills.length === 0) {
     return (

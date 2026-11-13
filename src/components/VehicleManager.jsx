@@ -42,6 +42,9 @@ export default function VehicleManager({
   return (
     <section className="card" aria-label="Your vehicles">
       <div className="step-label">Your vehicles</div>
+      {vehicles.length === 0 && (
+        <p className="fine-print">No vehicles yet — add one from the catalog or your own below.</p>
+      )}
       <ul className="vehicle-list">
         {vehicles.map((v) => (
           <li key={v.id} className={v.id === selectedVehicleId ? 'vehicle-row active' : 'vehicle-row'}>

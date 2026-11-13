@@ -6,7 +6,7 @@ import FillForm from './components/FillForm.jsx'
 import MileageStats from './components/MileageStats.jsx'
 import FillLog from './components/FillLog.jsx'
 import VehicleManager from './components/VehicleManager.jsx'
-import { DEFAULT_PRICES, VEHICLE_CATALOG } from './data.js'
+import { DEFAULT_PRICES } from './data.js'
 import {
   averageMileage,
   computeIntervals,
@@ -24,11 +24,6 @@ const LS = {
   theme: 'fcm.theme.v1',
 }
 
-function seedVehicles() {
-  const splendor = VEHICLE_CATALOG.find((v) => v.id === 'splendor')
-  return [{ ...splendor, id: 'my-splendor' }]
-}
-
 function initialTheme() {
   const saved = loadJSON(LS.theme, null)
   if (saved === 'light' || saved === 'dark') return saved
@@ -41,7 +36,9 @@ export default function App() {
   const [page, setPage] = useState('trip') // 'trip' | 'mileage'
   const [theme, setTheme] = useState(initialTheme)
   const [prices, setPrices] = useState(() => loadJSON(LS.prices, DEFAULT_PRICES))
-  const [vehicles, setVehicles] = useState(() => loadJSON(LS.vehicles, null) || seedVehicles())
+  // No vehicle is preseeded — a first-time visitor starts with an empty
+  // list and adds their own (from the catalog or custom).
+  const [vehicles, setVehicles] = useState(() => loadJSON(LS.vehicles, []))
   const [selectedVehicleId, setSelectedVehicleId] = useState(() =>
     loadJSON(LS.selected, null),
   )
@@ -178,6 +175,7 @@ export default function App() {
             <FillLog
               fills={vehicleFills}
               intervals={intervals}
+              hasVehicle={Boolean(selectedVehicle)}
               onEdit={(fill) => {
                 setEditingFill(fill)
                 window.scrollTo({ top: 0, behavior: 'smooth' })

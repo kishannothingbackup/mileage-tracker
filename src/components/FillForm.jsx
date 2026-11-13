@@ -147,6 +147,20 @@ export default function FillForm({
     onSave(candidate, Boolean(editingFill))
   }
 
+  // No vehicles at all yet — the form needs one to log a fill against.
+  // The VehicleManager below on this tab is where one gets added.
+  if (vehicles.length === 0) {
+    return (
+      <section className="card" aria-label="Log a fuel fill">
+        <div className="step-label">Step 3 · Log a fill</div>
+        <div className="empty-state">
+          <p>No vehicle yet.</p>
+          <p>Add one in Your vehicles below — from the catalog or your own — then log your first fill here.</p>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <form className="card" onSubmit={submit} aria-label="Log a fuel fill">
       <div className="step-label">Step 3 · Log a fill</div>
