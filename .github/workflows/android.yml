@@ -1,0 +1,82 @@
+# Builds the Mileage Tracker Android APK (debug-signed, installable by
+# sideloading) on every push to main that touches the app, and on demand.
+# Free on GitHub Actions for public repos. The APK is attached to the run
+# as an artifact named mileage-tracker-apk and published to the rolling
+# apk-latest release.
+#
+# The native android/ directory is NOT committed (it contains binary
+# resources). It is regenerated here on every run: `cap add android`
+# recreates the project, scripts/make-icon.py draws the icon + splash,
+# and @capacitor/assets generates the Android resources.
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - 'capacitor.config.json'
+      - 'scripts/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap add android
+
+      - name: Generate icon and splash
+        run: |
+          python3 -m pip install --break-system-packages --quiet pillow
+          python3 scripts/make-icon.py
+          npx @capacitor/assets generate --android
+
+      - run: npx cap sync android
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - run: chmod +x android/gradlew
+      - run: cd android && ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mileage-tracker-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      # Rolling public release so the APK can be downloaded without
+      # logging in to GitHub (the repo is public).
+      - name: Publish APK to rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd android/app/build/outputs/apk/debug
+          gh release delete apk-latest --yes --cleanup-tag || true
+          gh release create apk-latest app-debug.apk \
+            --title "Mileage Tracker APK (latest)" \
+            --notes "Debug-signed APK built from main. Sideload it on Android: allow installs from unknown sources, then open the APK file."
