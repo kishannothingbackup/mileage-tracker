@@ -57,6 +57,24 @@ lazily only when you tap "Read from photo". It needs network access the first ti
 (to fetch the OCR engine assets). If OCR fails or is unavailable, the form falls
 back to manual entry — OCR never blocks logging a fill.
 
+## Android app (APK)
+
+The same code is wrapped with [Capacitor](https://capacitorjs.com/) (`com.kishan.mileagetracker`)
+so it installs as a real Android app — home-screen icon, camera built in, and it
+opens with no connection (the web assets are bundled in the APK; place search and
+road distances still need internet, like the web version).
+
+- Build it locally: `npm run build && npx cap sync android`, then open `android/`
+  in Android Studio or run `./gradlew assembleDebug` (needs JDK 17 + Android SDK 36).
+  The native `android/` directory is not committed — run `npx cap add android`
+  once to recreate it (then `python3 scripts/make-icon.py` +
+  `npx @capacitor/assets generate --android` for the icon and splash).
+- Every push to `main` also builds it free on GitHub Actions
+  (`.github/workflows/android.yml`) and publishes the APK to the rolling
+  [`apk-latest`](https://github.com/kishannothingbackup/mileage-tracker/releases/tag/apk-latest)
+  release, so it can be downloaded without logging in to GitHub. The APK is
+  debug-signed — sideload it by allowing installs from unknown sources.
+
 ## Tech
 
 Vite + React 18 (plain JavaScript, JSX), no TypeScript. Styling is hand-written CSS
