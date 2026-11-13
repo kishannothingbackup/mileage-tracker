@@ -864,19 +864,27 @@ input:focus {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.vehicle-medallion {
+/* Square checkbox showing whether the row is selected: empty when not,
+ * orange with a tick when it is. */
+.vehicle-check-box {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #fbbf24, var(--accent-strong));
+  border-radius: 7px;
+  border: 1.5px solid var(--border);
+  background: transparent;
   color: #fff;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
+  line-height: 1;
+}
+
+.vehicle-row.active .vehicle-check-box {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, #fbbf24, var(--accent-strong));
 }
 
 .vehicle-info {
@@ -896,12 +904,6 @@ input:focus {
 .vehicle-info span {
   color: var(--muted);
   font-size: 0.8rem;
-}
-
-.vehicle-check {
-  margin-left: auto;
-  color: var(--accent-strong);
-  font-weight: 800;
 }
 
 .add-vehicle {

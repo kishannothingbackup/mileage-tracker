@@ -552,8 +552,8 @@ export default function TripCalculator({
                         }}
                         aria-pressed={selected}
                       >
-                        <span className="vehicle-medallion" aria-hidden="true">
-                          {v.name.slice(0, 1).toUpperCase()}
+                        <span className="vehicle-check-box" aria-hidden="true">
+                          {selected && '✓'}
                         </span>
                         <span className="vehicle-info">
                           <strong>{v.name}</strong>
@@ -562,7 +562,6 @@ export default function TripCalculator({
                             {v.claimed} km/L claimed
                           </span>
                         </span>
-                        {selected && <span className="vehicle-check">✓</span>}
                       </button>
                     </li>
                   )

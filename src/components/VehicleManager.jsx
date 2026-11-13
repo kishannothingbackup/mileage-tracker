@@ -54,8 +54,8 @@ export default function VehicleManager({
               onClick={() => onSelect(v.id)}
               aria-pressed={v.id === selectedVehicleId}
             >
-              <span className="vehicle-medallion" aria-hidden="true">
-                {v.name.slice(0, 1).toUpperCase()}
+              <span className="vehicle-check-box" aria-hidden="true">
+                {v.id === selectedVehicleId && '✓'}
               </span>
               <span className="vehicle-info">
                 <strong>{v.name}</strong>
@@ -64,7 +64,6 @@ export default function VehicleManager({
                   {v.claimed} km/L claimed
                 </span>
               </span>
-              {v.id === selectedVehicleId && <span className="vehicle-check">✓</span>}
             </button>
             {vehicles.length > 1 && (
               <button
