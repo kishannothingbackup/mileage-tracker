@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { QUICK_AMOUNTS, todayISO, uid } from '../data.js'
+import { readOdometer } from '../lib/ocr.js'
 
 /**
  * Step 3 — log a fuel fill.
@@ -29,6 +30,7 @@ export default function FillForm({
   const [photo, setPhoto] = useState(editingFill?.photo || null)
   const [ocrStatus, setOcrStatus] = useState('') // '', 'reading', 'done', 'failed'
   const [ocrNote, setOcrNote] = useState('')
+  const [ocrCandidates, setOcrCandidates] = useState([])
   const [error, setError] = useState('')
   const fileRef = useRef(null)
 
@@ -69,6 +71,7 @@ export default function FillForm({
       const dataUrl = await downscaleToDataUrl(file)
       setPhoto(dataUrl)
       setOcrNote('')
+      setOcrCandidates([])
       setOcrStatus('')
     } catch {
       setOcrNote('Could not read that photo — you can still type the reading.')
@@ -80,23 +83,37 @@ export default function FillForm({
     if (!photo) return
     setOcrStatus('reading')
     setOcrNote('Reading the odometer photo…')
+    setOcrCandidates([])
     try {
-      // Lazy: tesseract.js is fetched only when the user asks for a scan.
-      const { default: Tesseract } = await import('tesseract.js')
-      const { data } = await Tesseract.recognize(photo, 'eng', {
-        logger: () => {},
+      // Highest reading already logged for this vehicle: a new reading
+      // cannot be below it, so the OCR can flag backwards results.
+      const lastOdometer = Math.max(
+        0,
+        ...fills
+          .filter((f) => f.vehicleId === vehicle.id && f.id !== editingFill?.id)
+          .map((f) => f.odometer),
+      )
+      const { best, candidates, lcdFound } = await readOdometer(photo, {
+        lastOdometer: lastOdometer || null,
+        onProgress: (pass, total) =>
+          setOcrNote(`Reading the odometer photo… (${pass}/${total})`),
       })
-      const runs = (data.text.match(/\d[\d ,]*/g) || [])
-        .map((s) => s.replace(/[^0-9]/g, ''))
-        .filter((s) => s.length >= 2)
-        .sort((a, b) => b.length - a.length)
-      if (runs.length) {
-        setOdometer(runs[0])
+      if (best) {
+        setOdometer(best.value)
+        setOcrCandidates(candidates.filter((c) => c.value !== best.value))
         setOcrStatus('done')
-        setOcrNote(`Read ${runs[0]} km from the photo — check it before saving.`)
+        setOcrNote(
+          best.suspicious
+            ? `Read ${best.value} km — this looks off (too high, or below your last reading). Check it before saving.`
+            : `Read ${best.value} km from the photo — check it before saving.`,
+        )
       } else {
         setOcrStatus('failed')
-        setOcrNote('No number found in the photo — type the reading manually.')
+        setOcrNote(
+          lcdFound
+            ? 'Found the display but could not read its digits — try a closer, sharper photo, or type the reading.'
+            : 'No odometer number found — try a closer photo of the digital display, or type the reading manually.',
+        )
       }
     } catch {
       setOcrStatus('failed')
@@ -234,7 +251,7 @@ export default function FillForm({
             <button
               type="button"
               className="btn btn-ghost"
-              onClick={() => { setPhoto(null); setOcrNote(''); setOcrStatus('') }}
+              onClick={() => { setPhoto(null); setOcrNote(''); setOcrCandidates([]); setOcrStatus('') }}
             >
               Remove
             </button>
@@ -243,9 +260,26 @@ export default function FillForm({
         {ocrNote && (
           <p className={ocrStatus === 'failed' ? 'error-text' : 'ok-text'}>{ocrNote}</p>
         )}
+        {ocrCandidates.length > 0 && (
+          <div className="chip-row" aria-label="Other readings spotted in the photo">
+            <span className="chip-note">Also spotted:</span>
+            {ocrCandidates.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                className="chip"
+                onClick={() => setOdometer(c.value)}
+              >
+                {c.value}
+              </button>
+            ))}
+          </div>
+        )}
         <p className="fine-print">
-          Photo OCR is best-effort — if it misreads, just type the number. The
-          photo is stored on your device only.
+          Photo OCR reads the digital display — for best results, fill the
+          frame with it (close-up, steady, no glare). If it misreads, tap
+          one of the alternatives above or just type the number. The photo
+          is stored on your device only.
         </p>
       </div>
 
