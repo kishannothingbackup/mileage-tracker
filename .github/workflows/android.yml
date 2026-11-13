@@ -40,6 +40,11 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx cap add android
+      # The Geolocation plugin needs the location permissions in
+      # AndroidManifest.xml (its own manifest does not declare them), and
+      # android/ is regenerated on every run, so inject them here.
+      - name: Add location permission to the Android manifest
+        run: python3 scripts/add-location-permission.py
 
       - name: Generate icon and splash
         run: |
