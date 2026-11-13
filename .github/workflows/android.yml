@@ -52,7 +52,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       # The ubuntu runner already ships an Android SDK (ANDROID_HOME is
       # pre-set); the setup-android action is not needed and fails because
