@@ -6,6 +6,7 @@ import {
   getRoadDistance,
   haversineKm,
   queryGeolocationPermission,
+  getDevicePosition,
 } from '../lib/geo.js'
 
 /**
@@ -197,16 +198,10 @@ export default function TripCalculator({
   useEffect(() => {
     let cancelled = false
     async function initBias() {
-      if (!('geolocation' in navigator)) return
       const permission = await queryGeolocationPermission()
       if (cancelled || permission !== 'granted') return
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          if (!cancelled) setUserLoc({ lat: pos.coords.latitude, lon: pos.coords.longitude })
-        },
-        () => {},
-        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
-      )
+      const pos = await getDevicePosition()
+      if (!cancelled && pos) setUserLoc(pos)
     }
     initBias()
     return () => {
@@ -320,31 +315,27 @@ export default function TripCalculator({
     setResult(null)
   }
 
-  function useMyLocation() {
-    if (!('geolocation' in navigator)) {
-      setLocState('unavailable')
+  async function useMyLocation() {
+    setLocState('locating')
+    const pos = await getDevicePosition({ prompt: true })
+    if (!pos) {
+      // The prompt was denied (or location is unavailable): keep the
+      // distinction the UI already shows.
+      const perm = await queryGeolocationPermission()
+      setLocState(perm === 'denied' ? 'denied' : 'unavailable')
       return
     }
-    setLocState('locating')
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords
-        let name = null
-        try {
-          name = await reverseGeocode(latitude, longitude)
-        } catch {
-          name = null
-        }
-        const label = name || 'My location'
-        setFrom({ query: label, place: { name: label, detail: '', lat: latitude, lon: longitude } })
-        setUserLoc({ lat: latitude, lon: longitude })
-        setLocState('done')
-      },
-      (err) => {
-        setLocState(err.code === 1 ? 'denied' : 'unavailable')
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-    )
+    const { lat, lon } = pos
+    let name = null
+    try {
+      name = await reverseGeocode(lat, lon)
+    } catch {
+      name = null
+    }
+    const label = name || 'My location'
+    setFrom({ query: label, place: { name: label, detail: '', lat, lon } })
+    setUserLoc({ lat, lon })
+    setLocState('done')
   }
 
   function computeResult() {

@@ -13,6 +13,8 @@
 // keeps working offline or when a service is unreachable.
 // ---------------------------------------------------------------------------
 
+import { Geolocation } from '@capacitor/geolocation'
+import { Capacitor } from '@capacitor/core'
 import { LOCAL_PLACES } from '../data.js'
 
 const PHOTON_URL = 'https://photon.komoot.io/api/'
@@ -157,8 +159,19 @@ export async function searchPlaces(query, { signal, headers, bias } = {}) {
  * Geolocation permission state without prompting the user:
  * 'granted' | 'prompt' | 'denied' | 'unsupported'. Only when 'granted'
  * may the app read the position silently (no permission popup).
+ * On native Android this goes through the Capacitor Geolocation plugin
+ * (which is also what triggers the system permission prompt when asked);
+ * on the web it falls back to the browser Permissions API.
  */
 export async function queryGeolocationPermission() {
+  try {
+    const perm = await Geolocation.checkPermissions()
+    if (perm.location === 'granted' || perm.location === 'denied' || perm.location === 'prompt') {
+      return perm.location
+    }
+  } catch {
+    // Fall through to the browser API below.
+  }
   try {
     if (!('permissions' in navigator) || !navigator.permissions?.query) return 'unsupported'
     const status = await navigator.permissions.query({ name: 'geolocation' })
@@ -166,6 +179,48 @@ export async function queryGeolocationPermission() {
   } catch {
     return 'unsupported'
   }
+}
+
+/**
+ * The device's current position as { lat, lon }, or null when it cannot
+ * be read. With `prompt: true` the app asks for permission when needed
+ * (native Android system dialog / browser prompt); with `prompt: false`
+ * it only reads the position when permission is already granted and
+ * never shows a popup — use that for the silent search-bias check on load.
+ * The plugin path is what makes the prompt appear on Android at all:
+ * plain navigator.geolocation in the app's WebView fails instantly with
+ * PERMISSION_DENIED because the app has no location permission declared.
+ */
+export async function getDevicePosition({ prompt = false } = {}) {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const perm = await Geolocation.checkPermissions()
+      if (perm.location !== 'granted') {
+        if (!prompt) return null
+        const req = await Geolocation.requestPermissions()
+        if (req.location !== 'granted') return null
+      }
+      const pos = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+      })
+      return { lat: pos.coords.latitude, lon: pos.coords.longitude }
+    } catch {
+      return null
+    }
+  }
+  if (!('geolocation' in navigator)) return null
+  if (!prompt) {
+    const perm = await queryGeolocationPermission()
+    if (perm !== 'granted') return null
+  }
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    )
+  })
 }
 
 /**

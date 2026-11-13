@@ -67,7 +67,9 @@ body {
 .app {
   max-width: 480px;
   margin: 0 auto;
-  padding: 20px 16px calc(96px + env(safe-area-inset-bottom));
+  /* Top padding includes the status-bar safe area so the header never
+     crowds the clock/notification bar on phones (Capacitor edge-to-edge). */
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(96px + env(safe-area-inset-bottom));
 }
 
 .app-header {

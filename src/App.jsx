@@ -22,14 +22,17 @@ const LS = {
   selected: 'fcm.selectedVehicle.v1',
   fills: 'fcm.fills.v1',
   theme: 'fcm.theme.v1',
+  themeExplicit: 'fcm.themeExplicit.v1',
 }
 
 function initialTheme() {
+  // Light is the default. A saved theme is honoured only when the user
+  // explicitly picked it with the toggle — the old default followed the
+  // system setting and auto-saved that, which is not a choice.
+  const explicit = loadJSON(LS.themeExplicit, false)
   const saved = loadJSON(LS.theme, null)
-  if (saved === 'light' || saved === 'dark') return saved
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light'
+  if (explicit && (saved === 'light' || saved === 'dark')) return saved
+  return 'light'
 }
 
 export default function App() {
@@ -124,12 +127,15 @@ export default function App() {
       <header className="app-header">
         <div>
           <h1>Fuel Cost &amp; Mileage</h1>
-          <p className="app-subtitle">Ernakulam · trip costs &amp; real mileage</p>
+          <p className="app-subtitle">Trip costs &amp; real mileage</p>
         </div>
         <button
           type="button"
           className="btn btn-ghost theme-toggle"
-          onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+          onClick={() => {
+            saveJSON(LS.themeExplicit, true)
+            setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
+          }}
           aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {theme === 'dark' ? '☀ Light' : '☾ Dark'}
@@ -198,7 +204,7 @@ export default function App() {
       </main>
 
       <footer className="app-footer">
-        Prices bundled 13 Nov 2026, Ernakulam — editable in Step 1. All data stays
+        Prices bundled 13 Nov 2026 — editable in Step 1. All data stays
         on this device.
       </footer>
 

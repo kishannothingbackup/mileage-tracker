@@ -65,7 +65,7 @@ opens with no connection (the web assets are bundled in the APK; place search an
 road distances still need internet, like the web version).
 
 - Build it locally: `npm run build && npx cap sync android`, then open `android/`
-  in Android Studio or run `./gradlew assembleDebug` (needs JDK 17 + Android SDK 36).
+  in Android Studio or run `./gradlew assembleDebug` (needs JDK 21 + Android SDK 36).
   The native `android/` directory is not committed — run `npx cap add android`
   once to recreate it (then `python3 scripts/make-icon.py` +
   `npx @capacitor/assets generate --android` for the icon and splash).

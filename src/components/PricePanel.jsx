@@ -48,9 +48,7 @@ export default function PricePanel({ prices, onSavePrices }) {
           </div>
         </div>
         <div className="lcd-footer">
-          <span>
-            {prices.city} · {prices.dateLabel}
-          </span>
+          <span>{prices.dateLabel}</span>
           <span className="lcd-stale" title="Prices are bundled and editable — update them after your next fill.">
             bundled price
           </span>
