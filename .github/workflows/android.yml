@@ -54,12 +54,15 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
+      # The ubuntu runner already ships an Android SDK (ANDROID_HOME is
+      # pre-set); the setup-android action is not needed and fails because
+      # it tries to install the retired "tools" package.
       - name: Install Android SDK 36
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
 
       - run: chmod +x android/gradlew
       - run: cd android && ./gradlew assembleDebug --no-daemon
