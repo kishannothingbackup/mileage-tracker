@@ -44,6 +44,11 @@
 /* ------------------------------------------------------------------ */
 * {
   box-sizing: border-box;
+  /* No blue tap overlay: Android's WebView draws a blue rectangle over
+     anything you tap by default. Transparent here; the buttons' own
+     :active styles (scale / accent tint) are the press feedback. */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 html {
@@ -1025,6 +1030,7 @@ input:focus {
 
 .nav-btn:active {
   transform: scale(0.97);
+  background: var(--accent-soft);
 }
 
 /* ------------------------------------------------------------------ */
