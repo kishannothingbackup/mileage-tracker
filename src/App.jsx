@@ -149,8 +149,9 @@ export default function App() {
             <TripCalculator
               prices={prices}
               vehicles={vehicles}
-              selectedVehicleId={activeVehicleId}
+              selectedVehicleId={selectedVehicleId}
               onSelectVehicle={setSelectedVehicleId}
+              onAddVehicle={handleAddVehicle}
               measuredAvg={measuredAvg}
             />
           </>

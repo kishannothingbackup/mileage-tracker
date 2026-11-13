@@ -573,6 +573,20 @@ input:focus {
   transform: translateX(2px);
 }
 
+/* A segmented control inside a .field already gets its bottom margin
+ * from the field — don't stack a second one. */
+.field .segmented {
+  margin-bottom: 0;
+}
+
+.add-vehicle-btn {
+  margin-bottom: 12px;
+}
+
+.add-vehicle-inline {
+  margin-bottom: 12px;
+}
+
 /* ------------------------------------------------------------------ */
 /* Price editing                                                       */
 /* ------------------------------------------------------------------ */

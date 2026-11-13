@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getRouteDistance, formatINR } from '../data.js'
+import { getRouteDistance, formatINR, uid } from '../data.js'
 import {
   searchPlaces,
   reverseGeocode,
@@ -157,14 +157,26 @@ export default function TripCalculator({
   vehicles,
   selectedVehicleId,
   onSelectVehicle,
+  onAddVehicle,
   measuredAvg,
 }) {
   // Both fields start empty — nothing is searched or shown until the user types.
   const [from, setFrom] = useState({ query: '', place: null })
   const [to, setTo] = useState({ query: '', place: null })
   const [manualKm, setManualKm] = useState('')
-  const [mileageMode, setMileageMode] = useState('claimed') // claimed | measured | custom
+  // How mileage is provided: 'mileage' = type it directly (no vehicle
+  // needed — the first-open default, so no vehicle is ever preselected),
+  // 'vehicle' = pick one of the user's vehicles. Returning users who
+  // already picked a vehicle start in vehicle mode.
+  const [mode, setMode] = useState(() => (selectedVehicleId ? 'vehicle' : 'mileage'))
+  const [directMileage, setDirectMileage] = useState('')
+  const [directFuel, setDirectFuel] = useState('petrol')
+  const [mileageMode, setMileageMode] = useState('claimed') // claimed | measured | custom (vehicle mode)
   const [customMileage, setCustomMileage] = useState('')
+  const [addingVehicle, setAddingVehicle] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newFuel, setNewFuel] = useState('petrol')
+  const [newClaimed, setNewClaimed] = useState('')
   const [roundTrip, setRoundTrip] = useState(false)
   const [result, setResult] = useState(null)
   const [distanceInfo, setDistanceInfo] = useState({
@@ -198,7 +210,12 @@ export default function TripCalculator({
     }
   }, [])
 
-  const vehicle = vehicles.find((v) => v.id === selectedVehicleId) || vehicles[0]
+  // No vehicle is ever assumed: in mileage mode there is none, and in
+  // vehicle mode there is one only once the user picks it.
+  const vehicle =
+    mode === 'vehicle'
+      ? vehicles.find((v) => v.id === selectedVehicleId) || null
+      : null
 
   const samePlace =
     from.query.trim() !== '' &&
@@ -252,16 +269,34 @@ export default function TripCalculator({
 
   const distance =
     distanceInfo.km !== null ? distanceInfo.km : parseFloat(manualKm) || 0
-  const fuelPrice = vehicle ? prices[vehicle.fuel] : prices.petrol
+  const fuel = mode === 'mileage' ? directFuel : vehicle ? vehicle.fuel : 'petrol'
+  const fuelPrice = prices[fuel]
 
   const effectiveMileage =
-    mileageMode === 'measured' && measuredAvg
-      ? measuredAvg
-      : mileageMode === 'custom'
-        ? parseFloat(customMileage) || 0
-        : vehicle
-          ? vehicle.claimed
-          : 0
+    mode === 'mileage'
+      ? parseFloat(directMileage) || 0
+      : mileageMode === 'measured' && measuredAvg
+        ? measuredAvg
+        : mileageMode === 'custom'
+          ? parseFloat(customMileage) || 0
+          : vehicle
+            ? vehicle.claimed
+            : 0
+
+  function saveNewVehicle() {
+    const c = parseFloat(newClaimed)
+    if (!newName.trim() || !Number.isFinite(c) || c <= 0) return
+    onAddVehicle({
+      id: uid(),
+      name: newName.trim(),
+      type: 'Custom',
+      fuel: newFuel,
+      claimed: c,
+    })
+    setNewName('')
+    setNewClaimed('')
+    setAddingVehicle(false)
+  }
 
   function swap() {
     setFrom(to)
@@ -297,8 +332,17 @@ export default function TripCalculator({
   }
 
   function computeResult() {
-    if (!vehicle || !distance || distance <= 0 || !effectiveMileage || effectiveMileage <= 0) {
-      return { error: 'Pick a route, a vehicle and a mileage to calculate.' }
+    if (!distance || distance <= 0) {
+      return { error: 'Pick a route first.' }
+    }
+    if (mode === 'mileage' && (!effectiveMileage || effectiveMileage <= 0)) {
+      return { error: 'Enter your mileage (km/L) to calculate.' }
+    }
+    if (mode === 'vehicle' && !vehicle) {
+      return { error: 'Choose a vehicle to calculate.' }
+    }
+    if (!effectiveMileage || effectiveMileage <= 0) {
+      return { error: 'Pick a mileage to calculate.' }
     }
     const oneWayKm = distance
     const totalKm = roundTrip ? distance * 2 : distance
@@ -312,13 +356,15 @@ export default function TripCalculator({
       perKm: cost / totalKm,
       mileageUsed: effectiveMileage,
       mileageSource:
-        mileageMode === 'measured'
-          ? 'your measured mileage'
-          : mileageMode === 'custom'
-            ? 'custom mileage'
-            : 'claimed mileage',
+        mode === 'mileage'
+          ? 'your mileage'
+          : mileageMode === 'measured'
+            ? 'your measured mileage'
+            : mileageMode === 'custom'
+              ? 'custom mileage'
+              : 'claimed mileage',
       fuelPrice,
-      fuelLabel: vehicle.fuel === 'diesel' ? 'Diesel' : 'Petrol',
+      fuelLabel: fuel === 'diesel' ? 'Diesel' : 'Petrol',
     }
   }
 
@@ -332,7 +378,7 @@ export default function TripCalculator({
   useEffect(() => {
     if (result !== null) setResult(computeResult())
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [distance, vehicle, effectiveMileage, mileageMode, roundTrip, fuelPrice])
+  }, [distance, vehicle, effectiveMileage, mileageMode, roundTrip, fuelPrice, mode])
 
   return (
     <section className="card" aria-label="Trip cost calculator">
@@ -396,59 +442,176 @@ export default function TripCalculator({
         )}
       </div>
 
-      <label className="field">
-        Vehicle
-        <select
-          value={vehicle ? vehicle.id : ''}
-          onChange={(e) => { onSelectVehicle(e.target.value); setResult(null) }}
-        >
-          {vehicles.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name} · {v.claimed} km/L claimed
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="segmented" role="group" aria-label="Mileage to use">
-        <button
-          type="button"
-          className={mileageMode === 'claimed' ? 'seg-btn active' : 'seg-btn'}
-          onClick={() => setMileageMode('claimed')}
-        >
-          Claimed
-        </button>
-        <button
-          type="button"
-          className={mileageMode === 'measured' ? 'seg-btn active' : 'seg-btn'}
-          disabled={!measuredAvg}
-          title={measuredAvg ? 'Use your logged, measured mileage' : 'Log two fills to unlock measured mileage'}
-          onClick={() => setMileageMode('measured')}
-        >
-          My measured{measuredAvg ? ` (${measuredAvg.toFixed(1)})` : ''}
-        </button>
-        <button
-          type="button"
-          className={mileageMode === 'custom' ? 'seg-btn active' : 'seg-btn'}
-          onClick={() => setMileageMode('custom')}
-        >
-          Custom
-        </button>
+      <div className="field">
+        <span>Vehicle / mileage</span>
+        <div className="segmented" role="group" aria-label="How to provide mileage">
+          <button
+            type="button"
+            className={mode === 'mileage' ? 'seg-btn active' : 'seg-btn'}
+            onClick={() => setMode('mileage')}
+          >
+            Enter mileage
+          </button>
+          <button
+            type="button"
+            className={mode === 'vehicle' ? 'seg-btn active' : 'seg-btn'}
+            onClick={() => setMode('vehicle')}
+          >
+            Choose vehicle
+          </button>
+        </div>
       </div>
 
-      {mileageMode === 'custom' && (
-        <label className="field">
-          Your mileage (km/L)
-          <input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="0.1"
-            value={customMileage}
-            placeholder="e.g. 48"
-            onChange={(e) => setCustomMileage(e.target.value)}
-          />
-        </label>
+      {mode === 'mileage' ? (
+        <div className="field-row">
+          <label className="field">
+            Your mileage (km/L)
+            <span className="input-suffix">
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.1"
+                value={directMileage}
+                placeholder="e.g. 65"
+                onChange={(e) => setDirectMileage(e.target.value)}
+              />
+              <span>km/L</span>
+            </span>
+          </label>
+          <div className="field">
+            <span>Fuel</span>
+            <div className="segmented" role="group" aria-label="Fuel">
+              <button
+                type="button"
+                className={directFuel === 'petrol' ? 'seg-btn active' : 'seg-btn'}
+                onClick={() => setDirectFuel('petrol')}
+              >
+                Petrol
+              </button>
+              <button
+                type="button"
+                className={directFuel === 'diesel' ? 'seg-btn active' : 'seg-btn'}
+                onClick={() => setDirectFuel('diesel')}
+              >
+                Diesel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <label className="field">
+            Vehicle
+            <select
+              value={vehicle ? vehicle.id : ''}
+              onChange={(e) => onSelectVehicle(e.target.value)}
+            >
+              <option value="" disabled>
+                Choose a vehicle…
+              </option>
+              {vehicles.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name} · {v.claimed} km/L claimed
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {vehicle && (
+            <div className="segmented" role="group" aria-label="Mileage to use">
+              <button
+                type="button"
+                className={mileageMode === 'claimed' ? 'seg-btn active' : 'seg-btn'}
+                onClick={() => setMileageMode('claimed')}
+              >
+                Claimed
+              </button>
+              <button
+                type="button"
+                className={mileageMode === 'measured' ? 'seg-btn active' : 'seg-btn'}
+                disabled={!measuredAvg}
+                title={measuredAvg ? 'Use your logged, measured mileage' : 'Log two fills to unlock measured mileage'}
+                onClick={() => setMileageMode('measured')}
+              >
+                My measured{measuredAvg ? ` (${measuredAvg.toFixed(1)})` : ''}
+              </button>
+              <button
+                type="button"
+                className={mileageMode === 'custom' ? 'seg-btn active' : 'seg-btn'}
+                onClick={() => setMileageMode('custom')}
+              >
+                Custom
+              </button>
+            </div>
+          )}
+
+          {vehicle && mileageMode === 'custom' && (
+            <label className="field">
+              Your mileage (km/L)
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.1"
+                value={customMileage}
+                placeholder="e.g. 48"
+                onChange={(e) => setCustomMileage(e.target.value)}
+              />
+            </label>
+          )}
+
+          {!addingVehicle ? (
+            <button
+              type="button"
+              className="btn btn-ghost btn-block add-vehicle-btn"
+              onClick={() => setAddingVehicle(true)}
+            >
+              + Add my own vehicle
+            </button>
+          ) : (
+            <div className="add-vehicle-inline">
+              <label className="field">
+                Vehicle name
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. My Access 125"
+                />
+              </label>
+              <div className="field-row">
+                <label className="field">
+                  Fuel
+                  <select value={newFuel} onChange={(e) => setNewFuel(e.target.value)}>
+                    <option value="petrol">Petrol</option>
+                    <option value="diesel">Diesel</option>
+                  </select>
+                </label>
+                <label className="field">
+                  Claimed km/L
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.1"
+                    value={newClaimed}
+                    onChange={(e) => setNewClaimed(e.target.value)}
+                    placeholder="e.g. 55"
+                  />
+                </label>
+              </div>
+              <div className="row gap">
+                <button type="button" className="btn btn-primary btn-grow" onClick={saveNewVehicle}>
+                  Add vehicle
+                </button>
+                <button type="button" className="btn btn-ghost btn-grow" onClick={() => setAddingVehicle(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <button
