@@ -35,7 +35,7 @@ export default function FillForm({
   const fileRef = useRef(null)
 
   const vehicle =
-    vehicles.find((v) => v.id === selectedVehicleId) || vehicles[0]
+    vehicles.find((v) => v.id === selectedVehicleId) || null
 
   // When editing, keep the form on the fill's own vehicle.
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function FillForm({
   function submit(e) {
     e.preventDefault()
     if (!vehicle) {
-      setError('Add a vehicle first.')
+      setError('Pick a vehicle first.')
       return
     }
     const candidate = {
@@ -156,6 +156,19 @@ export default function FillForm({
         <div className="empty-state">
           <p>No vehicle yet.</p>
           <p>Add one in Your vehicles below — from the catalog or your own — then log your first fill here.</p>
+        </div>
+      </section>
+    )
+  }
+
+  // Vehicles exist but none is selected (the user unchecked).
+  if (!vehicle) {
+    return (
+      <section className="card" aria-label="Log a fuel fill">
+        <div className="step-label">Step 3 · Log a fill</div>
+        <div className="empty-state">
+          <p>No vehicle selected.</p>
+          <p>Pick one in Your vehicles below to log a fill for it.</p>
         </div>
       </section>
     )

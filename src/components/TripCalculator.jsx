@@ -181,6 +181,7 @@ export default function TripCalculator({
   const [newFuel, setNewFuel] = useState('petrol')
   const [newClaimed, setNewClaimed] = useState('')
   const [roundTrip, setRoundTrip] = useState(false)
+  const [splitCount, setSplitCount] = useState(2) // split the trip cost among friends
   const [result, setResult] = useState(null)
   const [distanceInfo, setDistanceInfo] = useState({
     km: null,
@@ -547,8 +548,13 @@ export default function TripCalculator({
                         type="button"
                         className="vehicle-pick"
                         onClick={() => {
-                          setChoice({ kind: 'mine', id: v.id })
-                          onSelectVehicle(v.id)
+                          if (selected) {
+                            setChoice(null)
+                            onSelectVehicle(null)
+                          } else {
+                            setChoice({ kind: 'mine', id: v.id })
+                            onSelectVehicle(v.id)
+                          }
                         }}
                         aria-pressed={selected}
                       >
@@ -662,6 +668,31 @@ export default function TripCalculator({
               <span className="stat-label">{roundTrip ? 'One way' : 'Round trip'}</span>
               <strong>{formatINR(roundTrip ? result.cost / 2 : result.cost * 2)}</strong>
             </div>
+          </div>
+          <div className="split-row">
+            <span className="stat-label">Split among friends</span>
+            <span className="split-controls">
+              <button
+                type="button"
+                className="split-btn"
+                disabled={splitCount <= 1}
+                onClick={() => setSplitCount((c) => Math.max(1, c - 1))}
+                aria-label="Fewer people"
+              >
+                −
+              </button>
+              <span className="split-count">{splitCount}</span>
+              <button
+                type="button"
+                className="split-btn"
+                disabled={splitCount >= 20}
+                onClick={() => setSplitCount((c) => Math.min(20, c + 1))}
+                aria-label="More people"
+              >
+                +
+              </button>
+            </span>
+            <strong className="split-per-head">{formatINR(result.cost / splitCount)} each</strong>
           </div>
         </div>
       )}

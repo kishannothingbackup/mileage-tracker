@@ -51,7 +51,7 @@ export default function VehicleManager({
             <button
               type="button"
               className="vehicle-pick"
-              onClick={() => onSelect(v.id)}
+              onClick={() => onSelect(v.id === selectedVehicleId ? null : v.id)}
               aria-pressed={v.id === selectedVehicleId}
             >
               <span className="vehicle-check-box" aria-hidden="true">

@@ -55,11 +55,14 @@ export default function App() {
   useEffect(() => saveJSON(LS.vehicles, vehicles), [vehicles])
   useEffect(() => saveJSON(LS.fills, fills), [fills])
   useEffect(() => {
-    if (selectedVehicleId) saveJSON(LS.selected, selectedVehicleId)
+    saveJSON(LS.selected, selectedVehicleId)
   }, [selectedVehicleId])
 
+  // No fallback to the first vehicle: "no vehicle selected" is a real
+  // state (the user can uncheck), and the mileage tab shows its empty
+  // states instead of silently using a vehicle.
   const selectedVehicle =
-    vehicles.find((v) => v.id === selectedVehicleId) || vehicles[0] || null
+    vehicles.find((v) => v.id === selectedVehicleId) || null
   const activeVehicleId = selectedVehicle?.id || null
 
   const vehicleFills = useMemo(
@@ -176,6 +179,7 @@ export default function App() {
               fills={vehicleFills}
               intervals={intervals}
               hasVehicle={Boolean(selectedVehicle)}
+              hasVehicles={vehicles.length > 0}
               onEdit={(fill) => {
                 setEditingFill(fill)
                 window.scrollTo({ top: 0, behavior: 'smooth' })

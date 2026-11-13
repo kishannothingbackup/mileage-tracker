@@ -286,6 +286,63 @@ body {
   color: #fde68a;
 }
 
+/* Split the trip cost among friends — one quiet row at the foot of the
+ * result panel: a stepper for the head count, price per head on the right. */
+.split-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(253, 230, 138, 0.18);
+}
+
+.split-row .stat-label {
+  color: #a7b8ad;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.split-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.split-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(253, 230, 138, 0.35);
+  background: transparent;
+  color: #fde68a;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.split-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.split-count {
+  min-width: 20px;
+  text-align: center;
+  color: #fff;
+  font-weight: 700;
+}
+
+.split-per-head {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: #fde68a;
+}
+
 /* ------------------------------------------------------------------ */
 /* Forms                                                               */
 /* ------------------------------------------------------------------ */
