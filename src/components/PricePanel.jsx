@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { DEFAULT_PRICES, formatINR } from '../data.js'
+import { DEFAULT_PRICES, formatDateLabel, formatINR, todayISO } from '../data.js'
 
 /**
  * Step 1 — Ernakulam fuel price panel.
- * Prices are bundled (13 Nov 2026) and editable; edits are stored locally.
+ * Prices are bundled and refreshed daily; edits are stored locally and
+ * win until a newer bundled price arrives.
  */
 export default function PricePanel({ prices, onSavePrices }) {
   const [editing, setEditing] = useState(false)
@@ -20,12 +21,24 @@ export default function PricePanel({ prices, onSavePrices }) {
     const p = parseFloat(petrol)
     const d = parseFloat(diesel)
     if (!Number.isFinite(p) || p <= 0 || !Number.isFinite(d) || d <= 0) return
-    onSavePrices({ ...prices, petrol: p, diesel: d })
+    const today = todayISO()
+    onSavePrices({
+      ...prices,
+      petrol: p,
+      diesel: d,
+      source: 'user',
+      updatedAt: today,
+      dateLabel: formatDateLabel(today),
+    })
     setEditing(false)
   }
 
   function reset() {
-    onSavePrices({ ...DEFAULT_PRICES })
+    onSavePrices({
+      ...DEFAULT_PRICES,
+      source: 'bundled',
+      updatedAt: DEFAULT_PRICES.date,
+    })
     setEditing(false)
   }
 
@@ -49,8 +62,8 @@ export default function PricePanel({ prices, onSavePrices }) {
         </div>
         <div className="lcd-footer">
           <span>{prices.dateLabel}</span>
-          <span className="lcd-stale" title="Prices are bundled and editable — update them after your next fill.">
-            bundled price
+          <span className="lcd-stale" title="Prices are bundled and refreshed daily — update them after your next fill.">
+            {prices.source === 'user' ? 'your price' : 'bundled price'}
           </span>
         </div>
       </div>
@@ -90,7 +103,7 @@ export default function PricePanel({ prices, onSavePrices }) {
             </button>
           </div>
           <button type="button" className="btn btn-ghost btn-block" onClick={reset}>
-            Reset to 13 Nov 2026
+            Reset to {DEFAULT_PRICES.dateLabel}
           </button>
         </div>
       ) : (

@@ -1,11 +1,15 @@
 // ---------------------------------------------------------------------------
 // Static data bundled with the app.
-// Fuel prices are from 13 Nov 2026, Ernakulam — editable in the app.
+// Fuel prices are updated daily (Ernakulam) by a scheduled job that edits
+// this block and redeploys — see the daily price-update cron. The app adopts
+// a bundled price whenever its date is newer than the saved one, so a
+// manual edit made after that date still wins until a newer bundle arrives.
 // ---------------------------------------------------------------------------
 
 export const DEFAULT_PRICES = {
   city: 'Ernakulam',
-  dateLabel: '13 Nov 2026',
+  date: '2026-11-15',
+  dateLabel: '15 Nov 2026',
   petrol: 113.53,
   diesel: 102.45,
 }
@@ -1708,6 +1712,13 @@ export function todayISO() {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+export function formatDateLabel(iso) {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const [y, m, d] = String(iso).split('-')
+  if (!y || !m || !d) return String(iso)
+  return `${Number(d)} ${months[Number(m) - 1]} ${y}`
 }
 
 export function formatINR(n) {

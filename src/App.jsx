@@ -44,7 +44,21 @@ function initialTheme() {
 export default function App() {
   const [page, setPage] = useState('trip') // 'trip' | 'mileage'
   const [theme, setTheme] = useState(initialTheme)
-  const [prices, setPrices] = useState(() => loadJSON(LS.prices, DEFAULT_PRICES))
+  // Daily price updates: a bundled price newer than the saved one replaces
+  // it on load; a manual edit made after the bundled date wins until a
+  // newer bundle arrives. Saved records without a date (pre-daily-update)
+  // always adopt the bundle.
+  const [prices, setPrices] = useState(() => {
+    const saved = loadJSON(LS.prices, null)
+    const bundled = {
+      ...DEFAULT_PRICES,
+      source: 'bundled',
+      updatedAt: DEFAULT_PRICES.date,
+    }
+    if (!saved) return bundled
+    if (!saved.updatedAt || saved.updatedAt < DEFAULT_PRICES.date) return bundled
+    return saved
+  })
   // No vehicle is preseeded — a first-time visitor starts with an empty
   // list and adds their own (from the catalog or custom).
   const [vehicles, setVehicles] = useState(() => loadJSON(LS.vehicles, []))
@@ -223,8 +237,8 @@ export default function App() {
             Download Petra for Android (.apk)
           </a>
         )}
-        Prices bundled 13 Nov 2026 — editable in Step 1. All data stays
-        on this device.
+        Prices bundled {DEFAULT_PRICES.dateLabel} — updated daily, editable in
+        Step 1. All data stays on this device.
       </footer>
 
       <BottomNav page={page} onNavigate={setPage} />
