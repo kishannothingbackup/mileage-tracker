@@ -15,6 +15,7 @@ import {
   validateFill,
 } from './lib/mileage.js'
 import { loadJSON, saveJSON } from './lib/storage.js'
+import { PETRA_LOGO } from './assets/petra-logo.js'
 
 const LS = {
   prices: 'fcm.prices.v1',
@@ -125,9 +126,12 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <div>
-          <h1>Fuel Cost &amp; Mileage</h1>
-          <p className="app-subtitle">Trip costs &amp; real mileage</p>
+        <div className="app-brand">
+          <img src={PETRA_LOGO} className="app-logo" alt="Petra logo" />
+          <div>
+            <h1>Petra</h1>
+            <p className="app-subtitle">Trip costs &amp; real mileage</p>
+          </div>
         </div>
         <button
           type="button"
