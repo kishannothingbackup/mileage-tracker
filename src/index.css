@@ -123,6 +123,16 @@ body {
   line-height: 1.5;
 }
 
+/* APK download button in the footer. Hidden inside the installed Android
+   app (it is only shown on the web, where Capacitor.isNativePlatform()
+   is false), so people browsing the site can install it. */
+.apk-download {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  margin-bottom: 12px;
+}
+
 .notice {
   margin-bottom: 12px;
   padding: 10px 14px;

@@ -16,6 +16,11 @@ import {
 } from './lib/mileage.js'
 import { loadJSON, saveJSON } from './lib/storage.js'
 import { PETRA_LOGO } from './assets/petra-logo.js'
+import { Capacitor } from '@capacitor/core'
+
+// Rolling release: always the latest APK built from main.
+const APK_DOWNLOAD_URL =
+  'https://github.com/kishannothingbackup/mileage-tracker/releases/download/apk-latest/app-debug.apk'
 
 const LS = {
   prices: 'fcm.prices.v1',
@@ -208,6 +213,16 @@ export default function App() {
       </main>
 
       <footer className="app-footer">
+        {!Capacitor.isNativePlatform() && (
+          <a
+            className="btn btn-ghost btn-block apk-download"
+            href={APK_DOWNLOAD_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Download Petra for Android (.apk)
+          </a>
+        )}
         Prices bundled 13 Nov 2026 — editable in Step 1. All data stays
         on this device.
       </footer>
