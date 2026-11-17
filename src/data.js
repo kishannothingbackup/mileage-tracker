@@ -8,8 +8,8 @@
 
 export const DEFAULT_PRICES = {
   city: 'Ernakulam',
-  date: '2026-11-16',
-  dateLabel: '16 Nov 2026',
+  date: '2026-11-17',
+  dateLabel: '17 Nov 2026',
   petrol: 113.53,
   diesel: 102.45,
 }
